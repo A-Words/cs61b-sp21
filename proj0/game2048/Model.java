@@ -110,15 +110,57 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
-        // TODO: Modify this.board (and perhaps this.score) to account
-        // for the tilt to the Side SIDE. If the board changed, set the
-        // changed local variable to true.
+        this.board.setViewingPerspective(side);
+        for (int column = 0; column < this.board.size(); column++) {
+            if (helperSingleColumn(this.board, column)) {
+                changed = true;
+            }
+        }
+        this.board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
+    }
+
+    // 处理单列
+    private boolean helperSingleColumn(Board b, int column) {
+        boolean changed = false;
+        int maxMoveRow = b.size();
+        for (int row = b.size() - 2; row >= 0; row--) {
+            Tile nowTile = b.tile(column, row);
+            if (nowTile == null) {
+                continue;
+            }
+            // 计算有多少空行可以移动过去
+            int targetRow = getTargetRow(b, column, nowTile, maxMoveRow, row);
+            if (targetRow != row) {
+                // 如果目标行非空，则增加分数，限制可移动行
+                if (b.tile(column, targetRow) != null) {
+                    score += nowTile.value() * 2;
+                    maxMoveRow = targetRow;
+                }
+                b.move(column, targetRow, nowTile);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    // 返回所需移动至的行值
+    private static int getTargetRow(Board b, int column, Tile nowTile, int maxMoveRow, int row) {
+        int targetRow = row;
+        for (int k = row + 1; k < maxMoveRow ; k++) {
+            if (b.tile(column, k) == null) {
+                targetRow = k;
+            } else if (b.tile(column, k).value() == nowTile.value()) {
+                targetRow = k;
+                return targetRow;
+            }
+        }
+        return targetRow;
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -137,7 +179,14 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                Tile nowTile = b.tile(i, j);
+                if (nowTile == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -147,7 +196,17 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                Tile nowTile = b.tile(i, j);
+                if (nowTile == null) {
+                    continue;
+                }
+                if (nowTile.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,7 +217,32 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                Tile nowTile = b.tile(i, j);
+                if (nowTile == null) {
+                    return true;
+                }
+                if (i + 1 < b.size()) {
+                    Tile adjacentRightTile = b.tile(i + 1, j);
+                    if (adjacentRightTile == null) {
+                        return true;
+                    }
+                    if (nowTile.value() == adjacentRightTile.value()) {
+                        return true;
+                    }
+                }
+                if (j + 1 < b.size()) {
+                    Tile adjacentDownTile = b.tile(i, j + 1);
+                    if (adjacentDownTile == null) {
+                        return true;
+                    }
+                    if (nowTile.value() == adjacentDownTile.value()) {
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
