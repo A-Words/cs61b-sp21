@@ -6,7 +6,7 @@ My solutions for CS 61B Spring 2021.
 |:---:|:----:|
 | lab1 | ✅ |
 | lab2 | ✅ |
-| lab3 | 🔄 |
+| lab3 | ✅ |
 | lab4 | ⏳ |
 | lab5 | ⏳ |
 | lab6 | ⏳ |
