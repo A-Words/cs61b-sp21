@@ -24,7 +24,7 @@ public class TimeSLList {
     public static void timeGetLast() {
         int START_N = 1000;
         int END_N = 128000;
-        int M = 1000;
+        int M = 10000;
 
         AList<Integer> Ns = new AList<>();
         AList<Double> times = new AList<>();
