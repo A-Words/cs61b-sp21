@@ -30,7 +30,7 @@ public class TimeSLList {
         AList<Double> times = new AList<>();
         AList<Integer> opCounts = new AList<>();
 
-        for (int n = START_N; n < END_N; n *= 2) {
+        for (int n = START_N; n <= END_N; n *= 2) {
             Ns.addLast(n);
             opCounts.addLast(M);
 
