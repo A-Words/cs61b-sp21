@@ -22,7 +22,36 @@ public class TimeSLList {
     }
 
     public static void timeGetLast() {
-        // TODO: YOUR CODE HERE
+        int START_N = 1000;
+        int END_N = 128000;
+        int M = 1000;
+
+        AList<Integer> Ns = new AList<>();
+        AList<Double> times = new AList<>();
+        AList<Integer> opCounts = new AList<>();
+
+        for (int n = START_N; n < END_N; n *= 2) {
+            Ns.addLast(n);
+            opCounts.addLast(M);
+
+            // 创建 SLList 并添加 n 个元素
+            SLList<Integer> testList = new SLList<>();
+            for (int i = 0; i < n; i += 1) {
+                testList.addLast(i);
+            }
+
+            // 计算执行 M 次 getLast 所需时间
+            Stopwatch sw = new Stopwatch();
+            for (int m = 0; m < M; m += 1) {
+                testList.getLast();
+            }
+            double timeInSeconds = sw.elapsedTime();
+
+            times.addLast(timeInSeconds);
+        }
+
+        System.out.printf("Timing table for getLast");
+        printTimingTable(Ns, times, opCounts);
     }
 
 }

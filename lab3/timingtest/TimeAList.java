@@ -22,6 +22,29 @@ public class TimeAList {
     }
 
     public static void timeAListConstruction() {
-        // TODO: YOUR CODE HERE
+        int START_N = 1000;
+        int END_N = 128000;
+
+        AList<Integer> Ns = new AList<>();
+        AList<Double> times = new AList<>();
+        AList<Integer> opCounts = new AList<>();
+
+        for (int n = START_N; n <= END_N; n *= 2) {
+            Ns.addLast(n);
+            opCounts.addLast(n);
+
+            // 创建新的测试列表，并监测写入到达 n 所使用时间
+            AList<Integer> testList = new AList<>();
+            Stopwatch sw = new Stopwatch();
+            for (int i = 0; i < n; i += 1) {
+                testList.addLast(i);
+            }
+            double timeInSeconds = sw.elapsedTime();
+
+            times.addLast(timeInSeconds);
+        }
+
+        System.out.printf("Timing table for addLast\n");
+        printTimingTable(Ns, times, opCounts);
     }
 }
