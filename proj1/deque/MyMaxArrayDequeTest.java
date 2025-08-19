@@ -33,7 +33,7 @@ public class MyMaxArrayDequeTest {
     }
 
     @Test
-    public void ComparatorATest() {
+    public void comparatorATest() {
         MaxArrayDeque<Integer> mad = new MaxArrayDeque<>(new ComparatorA());
         for (int i = 0; i < 10; i++) {
             mad.addFirst(i);
@@ -42,7 +42,7 @@ public class MyMaxArrayDequeTest {
     }
 
     @Test
-    public void ComparatorBTest() {
+    public void comparatorBTest() {
         MaxArrayDeque<String> mad = new MaxArrayDeque<>(new ComparatorB());
         mad.addFirst("Dog");
         mad.addFirst("Cat");
@@ -51,7 +51,7 @@ public class MyMaxArrayDequeTest {
     }
 
     @Test
-    public void ComparatorCTest() {
+    public void comparatorCTest() {
         MaxArrayDeque<Integer> mad = new MaxArrayDeque<>(new ComparatorA());
         for (int i = 0; i < 10; i++) {
             mad.addFirst(i);

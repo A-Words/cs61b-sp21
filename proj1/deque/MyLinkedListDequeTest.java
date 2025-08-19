@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 
 public class MyLinkedListDequeTest {
     @Test
-    public void LinkedListDequeTest() {
+    public void linkedListDequeTest() {
         LinkedListDeque<Integer> l = new LinkedListDeque<>();
         assertEquals(0, l.size());
     }

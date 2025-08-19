@@ -18,8 +18,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private int tail; // 向左一位为队列尾元素
     private int size;
 
-    enum DequeLocation { HEAD, TAIL }
-    enum Direction { LEFT, RIGHT }
+    private enum DequeLocation { HEAD, TAIL }
+    private enum Direction { LEFT, RIGHT }
 
     /** Creates an empty array deque. */
     public ArrayDeque() {
@@ -238,7 +238,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            int arrayIndex = (head + 1 + currentIndex) % dequeArray.length ;
+            int arrayIndex = (head + 1 + currentIndex) % dequeArray.length;
             T currentItem = dequeArray[arrayIndex];
             currentIndex++;
             return currentItem;
@@ -252,8 +252,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
      */
     @Override
     public boolean equals(Object o) {
-        if (o instanceof ArrayDeque) {
-            ArrayDeque<T> a = (ArrayDeque<T>) o;
+        if (o instanceof Deque) {
+            Deque<T> a = (Deque<T>) o;
             if (size != a.size()) {
                 return false;
             }

@@ -5,11 +5,11 @@ import java.util.NoSuchElementException;
 
 public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class Node {
-        public T item;
-        public Node next;
-        public Node previous; // previous 需手动修改
+        T item;
+        Node next;
+        Node previous; // previous 需手动修改
 
-        public Node(T t, Node n) {
+        Node(T t, Node n) {
             this.item = t;
             this.next = n;
         }
@@ -155,12 +155,12 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
      */
     @Override
     public boolean equals(Object o) {
-        if (o instanceof LinkedListDeque) {
-            LinkedListDeque<T> lld = (LinkedListDeque<T>) o;
+        if (o instanceof Deque) {
+            Deque<T> lld = (Deque<T>) o;
             if (size != lld.size()) {
                 return false;
             }
-            for (int i = 0; i < lld.size; i++) {
+            for (int i = 0; i < size; i++) {
                 if (!lld.get(i).equals(this.get(i))) {
                     return false;
                 }

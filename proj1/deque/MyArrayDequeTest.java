@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 
 public class MyArrayDequeTest {
     @Test
-    public void ArrayDequeTest() {
+    public void arrayDequeTest() {
         ArrayDeque<Integer> a = new ArrayDeque<>();
         assertEquals(0, a.size());
     }
@@ -132,8 +132,7 @@ public class MyArrayDequeTest {
                 int randVal = StdRandom.uniform(0, 100);
                 lld.addFirst(randVal);
                 ad.addFirst(randVal);
-            }
-            else if (operationNumber == 2) {
+            } else if (operationNumber == 2) {
                 // size
                 int lldSize = lld.size();
                 int adSize = ad.size();

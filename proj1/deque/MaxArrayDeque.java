@@ -3,7 +3,7 @@ package deque;
 import java.util.Comparator;
 
 public class MaxArrayDeque<T> extends ArrayDeque<T> {
-    Comparator<T> defaultComparator;
+    private Comparator<T> defaultComparator;
 
     /**
      * 使用给定的 {@code Comparator} 创建一个 {@code MaxArrayDeque}
