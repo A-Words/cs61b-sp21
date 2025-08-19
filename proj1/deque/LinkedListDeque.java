@@ -1,17 +1,17 @@
 package deque;
 
-public class LinkedListDeque<T> implements Deque<T> {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class Node {
         public T item;
         public Node next;
-        public Node previous;
+        public Node previous; // previous 需手动修改
 
         public Node(T t, Node n) {
             this.item = t;
             this.next = n;
-            if (this.next != null) {
-                this.next.previous = this;
-            }
         }
     }
 
@@ -22,6 +22,7 @@ public class LinkedListDeque<T> implements Deque<T> {
     @Override
     public void addFirst(T item) {
         sentinel.next = new Node(item, sentinel.next);
+        sentinel.next.next.previous = sentinel.next;
         sentinel.next.previous = sentinel; //修复 previous 为空
         size++;
     }
@@ -29,16 +30,10 @@ public class LinkedListDeque<T> implements Deque<T> {
     /** Adds an item of type {@code T} to the back of the deque. */
     @Override
     public void addLast(T item) {
-        Node temp = sentinel.previous;
         sentinel.previous.next = new Node(item, sentinel);
-        sentinel.previous.previous = temp; //修复 previous 为空
+        sentinel.previous.next.previous = sentinel.previous;
+        sentinel.previous = sentinel.previous.next;
         size++;
-    }
-
-    /** Returns {@code true} if deque is empty, {@code false} otherwise. */
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
     }
 
     /** Returns the number of items in the deque. */
@@ -107,19 +102,73 @@ public class LinkedListDeque<T> implements Deque<T> {
      */
     @Override
     public T get(int index) {
-        if (index < 0 || index >= size) {
-            return null;
+//        if (index < 0 || index >= size) {
+//            return null;
+//        }
+//        Node n = sentinel.next;
+//        for (int i = 0; i < index; i++) {
+//            n = n.next;
+//        }
+//        return n.item;
+        int i = 0;
+        for (T t : this) {
+            if (i == index) {
+                return t;
+            }
+            i++;
         }
-        Node n = sentinel.next;
-        for (int i = 0; i < index; i++) {
-            n = n.next;
-        }
-        return n.item;
+        return null;
     }
 
-    //public Iterator<T> iterator() {}
+    /**
+     * The Deque objects we’ll make are iterable (i.e., {@code Iterable<T>})
+     * so we must provide this method to return an iterator.
+     */
+    @Override
+    public Iterator<T> iterator() {
+        return new LinkedListDequeIterator();
+    }
 
-    //public boolean equals(Objects o) {}
+    private class LinkedListDequeIterator implements Iterator<T> {
+        Node currentNode = sentinel.next;
+
+        @Override
+        public boolean hasNext() {
+            return currentNode != sentinel;
+        }
+
+        @Override
+        public T next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            T currentItem = currentNode.item;
+            currentNode = currentNode.next;
+            return currentItem;
+        }
+    }
+
+    /**
+     * Returns whether the parameter {@code o} is equal to the Deque.
+     * {@code o} is considered equal if it is a Deque and
+     * if it contains the same contents in the same order.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof LinkedListDeque) {
+            LinkedListDeque<T> lld = (LinkedListDeque<T>) o;
+            if (size != lld.size()) {
+                return false;
+            }
+            for (int i = 0; i < lld.size; i++) {
+                if (!lld.get(i).equals(this.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
 
     /** Creates an empty linked list deque. */
     public LinkedListDeque() {

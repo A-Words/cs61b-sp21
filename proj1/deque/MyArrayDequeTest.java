@@ -1,5 +1,6 @@
 package deque;
 
+import edu.princeton.cs.algs4.StdRandom;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -111,5 +112,45 @@ public class MyArrayDequeTest {
             a.removeLast();
         }
         assertEquals(10, a.size());
+    }
+
+    @Test
+    public void randomizedTest() {
+        LinkedListDeque<Integer> lld = new LinkedListDeque<>();
+        ArrayDeque<Integer> ad = new ArrayDeque<>();
+
+        int N = 5000;
+        for (int i = 0; i < N; i += 1) {
+            int operationNumber = StdRandom.uniform(0, 6);
+            if (operationNumber == 0) {
+                // addLast
+                int randVal = StdRandom.uniform(0, 100);
+                lld.addLast(randVal);
+                ad.addLast(randVal);
+            } else if (operationNumber == 1) {
+                // addFirst
+                int randVal = StdRandom.uniform(0, 100);
+                lld.addFirst(randVal);
+                ad.addFirst(randVal);
+            }
+            else if (operationNumber == 2) {
+                // size
+                int lldSize = lld.size();
+                int adSize = ad.size();
+                assertEquals(lldSize, adSize);
+            } else if (!lld.isEmpty()) {
+                if (operationNumber == 3) {
+                    // get
+                    int randVal = StdRandom.uniform(0, lld.size());
+                    assertEquals(lld.get(randVal), ad.get(randVal));
+                } else if (operationNumber == 4) {
+                    // removeLast
+                    assertEquals(lld.removeLast(), ad.removeLast());
+                } else if (operationNumber == 5) {
+                    // removeFirst
+                    assertEquals(lld.removeFirst(), ad.removeFirst());
+                }
+            }
+        }
     }
 }

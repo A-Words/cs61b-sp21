@@ -1,6 +1,9 @@
 package deque;
 
-public class ArrayDeque<T> implements Deque<T> {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     /** 数组起始大小 */
     private static final int START_SIZE = 8;
     /** 最低负载率，达到后收缩 Array */
@@ -125,12 +128,6 @@ public class ArrayDeque<T> implements Deque<T> {
         size++;
     }
 
-    /** Returns {@code true} if deque is empty, {@code false} otherwise. */
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
     /** Returns the number of items in the deque. */
     @Override
     public int size() {
@@ -204,10 +201,69 @@ public class ArrayDeque<T> implements Deque<T> {
      */
     @Override
     public T get(int index) {
-        if (index < size) {
-            int arrayIndex = (head + 1 + index + dequeArray.length) % dequeArray.length;
-            return dequeArray[arrayIndex];
+//        if (index < size) {
+//            int arrayIndex = (head + 1 + index + dequeArray.length) % dequeArray.length;
+//            return dequeArray[arrayIndex];
+//        }
+//        return null;
+        int i = 0;
+        for (T t : this) {
+            if (i == index) {
+                return t;
+            }
+            i++;
         }
         return null;
+    }
+
+    /**
+     * The Deque objects we’ll make are iterable (i.e., {@code Iterable<T>})
+     * so we must provide this method to return an iterator.
+     */
+    @Override
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    private class ArrayDequeIterator implements Iterator<T> {
+        int currentIndex = 0;
+
+        @Override
+        public boolean hasNext() {
+            return currentIndex < size;
+        }
+
+        @Override
+        public T next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            int arrayIndex = (head + 1 + currentIndex) % dequeArray.length ;
+            T currentItem = dequeArray[arrayIndex];
+            currentIndex++;
+            return currentItem;
+        }
+    }
+
+    /**
+     * Returns whether the parameter {@code o} is equal to the Deque.
+     * {@code o} is considered equal if it is a Deque and
+     * if it contains the same contents in the same order.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof ArrayDeque) {
+            ArrayDeque<T> a = (ArrayDeque<T>) o;
+            if (size != a.size()) {
+                return false;
+            }
+            for (int i = 0; i < size; i++) {
+                if (!a.get(i).equals(this.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }

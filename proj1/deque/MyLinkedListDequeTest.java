@@ -1,5 +1,6 @@
 package deque;
 
+import edu.princeton.cs.algs4.StdRandom;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -97,5 +98,25 @@ public class MyLinkedListDequeTest {
         l.addFirst(3);
         assertEquals(2, (int) l.getRecursive(1));
         assertEquals(1, (int) l.getRecursive(2));
+    }
+
+    @Test
+    public void randomizedTest() {
+        LinkedListDeque<Integer> lld = new LinkedListDeque<>();
+
+        int N = 5000;
+        for (int i = 0; i < N; i += 1) {
+            int operationNumber = StdRandom.uniform(0, 2);
+            if (operationNumber == 0) {
+                // addLast
+                int randVal = StdRandom.uniform(0, 100);
+                lld.addLast(randVal);
+            } else if (operationNumber == 1) {
+                // addFirst
+                int randVal = StdRandom.uniform(0, 100);
+                lld.addFirst(randVal);
+            }
+        }
+        assertEquals(N, lld.size());
     }
 }

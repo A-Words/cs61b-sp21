@@ -8,7 +8,9 @@ public interface Deque<T> {
     /** Adds an item of type {@code T} to the back of the deque. */
     void addLast(T item);
     /** Returns {@code true} if deque is empty, {@code false} otherwise. */
-    boolean isEmpty();
+    default boolean isEmpty() {
+        return size() == 0;
+    }
     /** Returns the number of items in the deque. */
     int size();
     /**
@@ -36,11 +38,12 @@ public interface Deque<T> {
      * The Deque objects we’ll make are iterable (i.e., {@code Iterable<T>})
      * so we must provide this method to return an iterator.
      */
-    //Iterator<T> iterator();
+    Iterator<T> iterator();
+
     /**
      * Returns whether the parameter {@code o} is equal to the Deque.
      * {@code o} is considered equal if it is a Deque and
      * if it contains the same contents in the same order.
      */
-    //boolean equals(Object o);
+    boolean equals(Object o);
 }
