@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
-    BSTNode root;
+    private BSTNode root;
     // If new BST, root != null. If not new BST, root.size == null.
 
     @Override
@@ -64,7 +64,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     @Override
-    public Iterator iterator() {
+    public Iterator<K> iterator() {
         throw new UnsupportedOperationException();
     }
 
