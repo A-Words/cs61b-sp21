@@ -11,7 +11,7 @@ My solutions for CS 61B Spring 2021.
 | lab5 | ✅ |
 | lab6 | ✅ |
 | lab7 | ✅ |
-| lab8 | 🔄 |
+| lab8 | ✅ |
 
 ### Project
 | project |status|
