@@ -15,9 +15,13 @@ public class Blob {
         this.sha1 = sha1(readContentsAsString(file) + file.getName());
     }
 
-    public void save() throws IOException {
+    public void save() {
         File blobFile = join(BLOB_DIR, this.sha1);
-        Files.copy(file.toPath(), blobFile.toPath());
+        try {
+            Files.copy(file.toPath(), blobFile.toPath());
+        } catch (IOException e) {
+            throw error("Internal error saving blob.");
+        }
     }
 
     public static File load(String sha1) {

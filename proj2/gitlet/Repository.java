@@ -45,13 +45,17 @@ public class Repository {
 
     private static final File CURRENT_COMMIT_SHA1_FILE = join(COMMIT_DIR, "currentCommitSha1");
 
-    public static void init() throws IOException {
+    public static void init() {
         if (isRepositoryExists()) {
             throw error("A Gitlet version-control system already exists in the current directory.");
         }
         List<File> dirs = List.of(GITLET_DIR, COMMIT_DIR, STAGING_DIR, BLOB_DIR);
         for (File dir : dirs) {
-            Files.createDirectory(dir.toPath());
+            try {
+                Files.createDirectory(dir.toPath());
+            } catch (IOException e) {
+                throw error("Unable to create directory.");
+            }
         }
         Commit initial = new Commit("initial commit", ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, UTC));
         initial.save();
@@ -70,12 +74,12 @@ public class Repository {
         }
     }
 
-    public static void stagingFileByName(String fileName) throws IOException {
+    public static void stagingFileByName(String fileName) {
         File file = join(CWD, fileName);
         stagingFile(file);
     }
 
-    public static void stagingFile(File file) throws IOException {
+    public static void stagingFile(File file) {
         checkDir();
         if (!file.exists()) {
             throw error("File does not exist.");
@@ -89,7 +93,11 @@ public class Repository {
             String fileInCurrentCommitSha1 = sha1(readContentsAsString(fileInCurrentCommit));
             if (fileSha1.equals(fileInCurrentCommitSha1)) {
                 if (stagingDirFile.exists()) {
-                    Files.delete(stagingDirFile.toPath());
+                    try {
+                        Files.delete(stagingDirFile.toPath());
+                    } catch (IOException e) {
+                        throw error("Unable to delete staging file.");
+                    }
                 }
                 return;
             }
@@ -97,7 +105,7 @@ public class Repository {
         writeContents(stagingDirFile, fileString);
     }
 
-    public static void stagingToCommit(String message) throws IOException {
+    public static void stagingToCommit(String message) {
         checkDir();
         if (STAGING_DIR.list().length == 0) {
             message("No changes added to the commit.");
@@ -116,7 +124,11 @@ public class Repository {
         commit.save();
         setCurrentCommitSha1(commit.getSha1());
         for (File file : STAGING_DIR.listFiles()) {
-            Files.delete(file.toPath());
+            try {
+                Files.delete(file.toPath());
+            } catch (IOException e) {
+                throw error("Unable to delete staging file.");
+            }
         }
     }
 
@@ -153,11 +165,11 @@ public class Repository {
         writeContents(CURRENT_COMMIT_SHA1_FILE, sha1);
     }
 
-    public static void checkout(String fileName) throws IOException {
+    public static void checkout(String fileName) {
         checkout(getCurrentCommitSha1(), fileName);
     }
 
-    public static void checkout(String commitSha1, String fileName) throws IOException {
+    public static void checkout(String commitSha1, String fileName) {
         checkDir();
         if (commitSha1.length() < 40) {
             String fullCommitSha1 = findFileByPrefix(COMMIT_DIR, commitSha1);
@@ -172,7 +184,11 @@ public class Repository {
             throw error("File does not exist in that commit.");
         }
         File workingFile = join(CWD, fileName);
-        Files.copy(commitFile.toPath(), workingFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.copy(commitFile.toPath(), workingFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw error("Unable to copy commit file.");
+        }
     }
 
     private static String findFileByPrefix(File dir, String prefix) {
