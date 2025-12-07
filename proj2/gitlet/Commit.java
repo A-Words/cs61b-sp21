@@ -1,11 +1,11 @@
 package gitlet;
 
-// TODO: any imports you need here
-
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import static gitlet.Repository.BLOB_DIR;
 import static gitlet.Repository.COMMIT_DIR;
@@ -15,12 +15,10 @@ import static gitlet.Utils.*;
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author A_Words
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
@@ -47,6 +45,15 @@ public class Commit implements Serializable {
         this.parentSha1 = parentSha1;
         timestamp = ZonedDateTime.now();
         sha1 = sha1(message + timestamp + filesMappingBlobs.toString() + parentSha1);
+    }
+
+    public Commit(String message, HashMap<String, String> filesMappingBlobs, String parentSha1, String secondParentSha1) {
+        this.message = message;
+        this.filesMappingBlobs = filesMappingBlobs;
+        this.parentSha1 = parentSha1;
+        this.secondParentSha1 = secondParentSha1;
+        timestamp = ZonedDateTime.now();
+        sha1 = sha1(message + timestamp + filesMappingBlobs.toString() + parentSha1 + secondParentSha1);
     }
 
     public Commit parent() {
@@ -97,17 +104,27 @@ public class Commit implements Serializable {
     }
 
     public File findFile(String fileName) {
-        return findFileByCommit(fileName, this);
-    }
-
-    public static File findFileByCommit(String fileName, Commit commit) {
-        if (commit == null) {
+        String blobSha1 = findFileSha1(fileName);
+        if (blobSha1 == null) {
             return null;
         }
-        if (commit.filesMappingBlobs.containsKey(fileName)) {
-            String blobSha1 = commit.filesMappingBlobs.get(fileName);
-            return Blob.load(blobSha1);
+        File blobFile = Blob.load(blobSha1);
+        try {
+            if (Files.size(blobFile.toPath()) == 0) {
+                return null;
+            } else {
+                return blobFile;
+            }
+        } catch (Exception e) {
+            throw error("Internal error reading blob file.");
         }
-        return findFileByCommit(fileName, commit.parent());
+    }
+
+    public String findFileSha1(String fileName) {
+        return filesMappingBlobs.get(fileName);
+    }
+
+    public HashSet<String> getTrackedFiles() {
+        return new HashSet<>(filesMappingBlobs.keySet());
     }
 }

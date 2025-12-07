@@ -17,6 +17,9 @@ public class Blob {
 
     public void save() {
         File blobFile = join(BLOB_DIR, this.sha1);
+        if (blobFile.exists()) {
+            return;
+        }
         try {
             Files.copy(file.toPath(), blobFile.toPath());
         } catch (IOException e) {

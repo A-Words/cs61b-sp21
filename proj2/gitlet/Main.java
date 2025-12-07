@@ -1,7 +1,5 @@
 package gitlet;
 
-import java.io.IOException;
-
 import static gitlet.Utils.message;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
@@ -21,48 +19,80 @@ public class Main {
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
-                if (args.length == 1) {
-                    Repository.init();
-                } else {
-                    incorrectOperands();
-                }
+                checkOperands(args, 1);
+                Repository.init();
                 break;
             case "add":
-                if (args.length == 2) {
-                    Repository.stagingFileByName(args[1]);
-                } else {
-                    incorrectOperands();
-                }
+                checkOperands(args, 2);
+                Repository.stagingFileByName(args[1]);
                 break;
             case "commit":
-                if (args.length == 2) {
-                    String message = args[1];
-                    Repository.stagingToCommit(message);
-                } else {
-                    incorrectOperands();
-                }
+                checkOperands(args, 2);
+                String message = args[1];
+                Repository.stagingToCommit(message);
+                break;
+            case "rm":
+                checkOperands(args, 2);
+                String fileName = args[1];
+                Repository.rmFileByName(fileName);
+                break;
+            case "log":
+                checkOperands(args, 1);
+                Repository.log();
+                break;
+            case "global-log":
+                checkOperands(args, 1);
+                Repository.globalLog();
+                break;
+            case "find":
+                checkOperands(args, 2);
+                String commitMessage = args[1];
+                Repository.find(commitMessage);
+                break;
+            case "status":
+                checkOperands(args, 1);
+                Repository.status();
                 break;
             case "checkout":
                 if (args.length == 3 && args[1].equals("--")) {
-                    String fileName = args[2];
+                    fileName = args[2];
                     Repository.checkout(fileName);
                 } else if (args.length == 4 && args[2].equals("--")) {
                     String commitID = args[1];
-                    String fileName = args[3];
+                    fileName = args[3];
                     Repository.checkout(commitID, fileName);
                 } else if (args.length == 2) {
-
-                    return;
+                    String branchName = args[1];
+                    Repository.checkoutBranch(branchName);
                 } else {
                     incorrectOperands();
                 }
                 break;
-            case "log":
-                Repository.log();
+            case "branch":
+                checkOperands(args, 2);
+                Repository.createBranch(args[1]);
+                break;
+            case "rm-branch":
+                checkOperands(args, 2);
+                Repository.removeBranch(args[1]);
+                break;
+            case "reset":
+                checkOperands(args, 2);
+                Repository.reset(args[1]);
+                break;
+            case "merge":
+                checkOperands(args, 2);
+                Repository.merge(args[1]);
                 break;
             default:
                 message("No command with that name exists.");
                 break;
+        }
+    }
+
+    private static void checkOperands(String[] args, int num) {
+        if (args.length != num) {
+            incorrectOperands();
         }
     }
 

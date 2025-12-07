@@ -18,5 +18,5 @@ My solutions for CS 61B Spring 2021.
 |:----:|:----:|
 | proj0 | ✅ |
 | proj1 | ✅ |
-| proj2 | 🔄 |
-| proj3 | ⏳ |
+| proj2 | ✅ |
+| proj3 | 🔄 |
