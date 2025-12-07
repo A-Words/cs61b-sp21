@@ -12,32 +12,41 @@ import java.util.*;
 import static gitlet.Utils.*;
 import static java.time.ZoneOffset.UTC;
 
-/** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
+/**
+ * Represents a gitlet repository.
  *
- *  @author A_Words
+ * @author A_Words
  */
 public class Repository {
+    /**
+     * The current working directory.
+     */
+    public static final File CWD = new File(System.getProperty("user.dir"));
+    /**
+     * The .gitlet directory.
+     */
+    public static final File GITLET_DIR = join(CWD, ".gitlet");
+    /**
+     * The commit directory.
+     */
+    public static final File COMMIT_DIR = join(GITLET_DIR, "commits");
+    /**
+     * The staging directory.
+     */
+    public static final File STAGING_DIR = join(GITLET_DIR, "staging");
+    /**
+     * The blob directory.
+     */
+    public static final File BLOB_DIR = join(GITLET_DIR, "blobs");
+    private static final File BRANCHES_FILE = join(GITLET_DIR, "branches");
+    private static final File CURRENT_BRANCH_FILE = join(GITLET_DIR, "currentBranch");
     /**
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
      */
 
-    /** The current working directory. */
-    public static final File CWD = new File(System.getProperty("user.dir"));
-    /** The .gitlet directory. */
-    public static final File GITLET_DIR = join(CWD, ".gitlet");
-    /** The commit directory. */
-    public static final File COMMIT_DIR = join(GITLET_DIR, "commits");
-    /** The staging directory. */
-    public static final File STAGING_DIR = join(GITLET_DIR, "staging");
-    /** The blob directory. */
-    public static final File BLOB_DIR = join(GITLET_DIR, "blobs");
-
-    private static final File BRANCHES_FILE = join(GITLET_DIR, "branches");
-    private static final File CURRENT_BRANCH_FILE = join(GITLET_DIR, "currentBranch");
+    private static final String COMMIT_DATE_PATTERN = "E MMM d HH:mm:ss yyyy Z";
 
     public static void init() {
         if (isRepositoryExists()) {
@@ -53,10 +62,12 @@ public class Repository {
                 throw error("Unable to create directory.");
             }
         }
-        HashMap<String, String> branchMappingCommit = new HashMap<>();
+        TreeMap<String, String> branchMappingCommit = new TreeMap<>();
         writeObject(BRANCHES_FILE, branchMappingCommit);
 
-        Commit initial = new Commit("initial commit", ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, UTC));
+        Commit initial = new Commit(
+                "initial commit",
+                ZonedDateTime.of(1970, 1, 1, 0, 0, 0, 0, UTC));
         initial.save();
         setBranch("master", initial.getSha1());
         switchBranch("master");
@@ -108,20 +119,9 @@ public class Repository {
         }
     }
 
-    public static void stagingToCommit(String message) {
-        checkDir();
-        if (Objects.requireNonNull(STAGING_DIR.list()).length == 0) {
-            message("No changes added to the commit.");
-            System.exit(0);
-        }
-        if (message == null || message.isEmpty()) {
-            message("Please enter a commit message.");
-            System.exit(0);
-        }
-
-        // 先继承父提交的所有文件映射
+    private static TreeMap<String, String> getFilesMappingBlobs() {
         Commit parentCommit = getCurrentCommit();
-        HashMap<String, String> filesMappingBlobs = new HashMap<>();
+        TreeMap<String, String> filesMappingBlobs = new TreeMap<>();
         if (parentCommit != null) {
             for (String fileName : parentCommit.getTrackedFiles()) {
                 String blobSha1 = parentCommit.findFileSha1(fileName);
@@ -147,16 +147,25 @@ public class Repository {
                 throw error("Unable to read staging file.");
             }
         }
+        return filesMappingBlobs;
+    }
+
+    public static void stagingToCommit(String message) {
+        checkDir();
+        if (Objects.requireNonNull(STAGING_DIR.list()).length == 0) {
+            message("No changes added to the commit.");
+            System.exit(0);
+        }
+        if (message == null || message.isEmpty()) {
+            message("Please enter a commit message.");
+            System.exit(0);
+        }
+
+        TreeMap<String, String> filesMappingBlobs = getFilesMappingBlobs();
         Commit commit = new Commit(message, filesMappingBlobs, getCurrentCommitSha1());
         commit.save();
         setCurrentCommitSha1(commit.getSha1());
-        for (File file : Objects.requireNonNull(STAGING_DIR.listFiles())) {
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                throw error("Unable to delete staging file.");
-            }
-        }
+        clearStagingArea();
     }
 
     public static void log() {
@@ -187,10 +196,13 @@ public class Repository {
         message("===");
         message("commit " + commit.getSha1());
         if (commit.secondParent() != null) {
-            message("Merge: " + commit.getParentSha1().substring(0, 7) + " " + commit.getSecondParentSha1().substring(0, 7));
+            message("Merge: " + commit.getParentSha1().substring(0, 7)
+                    + " "
+                    + commit.getSecondParentSha1().substring(0, 7));
         }
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("E MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
-        message("Date: " + commit.getTimestamp().withZoneSameInstant(ZoneId.systemDefault()).format(dateTimeFormatter));
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(COMMIT_DATE_PATTERN, Locale.ENGLISH);
+        message("Date: "
+                + commit.getTimestamp().withZoneSameInstant(ZoneId.systemDefault()).format(dateTimeFormatter));
         message(commit.getMessage());
         message("");
     }
@@ -207,8 +219,8 @@ public class Repository {
         setBranch(getCurrentBranchName(), sha1);
     }
 
-    private static HashSet<String> getCurrentFileSet() {
-        return new HashSet<>(Objects.requireNonNull(plainFilenamesIn(CWD)));
+    private static TreeSet<String> getCurrentFileSet() {
+        return new TreeSet<>(Objects.requireNonNull(plainFilenamesIn(CWD)));
     }
 
     public static void checkout(String fileName) {
@@ -278,9 +290,9 @@ public class Repository {
             System.exit(0);
         }
 
-        HashSet<String> currentFileSet = getCurrentFileSet();
-        HashSet<String> currentTrackedFiles = getCurrentCommit().getTrackedFiles();
-        HashSet<String> targetTrackedFiles = commit.getTrackedFiles();
+        TreeSet<String> currentFileSet = getCurrentFileSet();
+        TreeSet<String> currentTrackedFiles = getCurrentCommit().getTrackedFiles();
+        TreeSet<String> targetTrackedFiles = commit.getTrackedFiles();
 
         for (String fileName : targetTrackedFiles) {
             if (currentFileSet.contains(fileName) && !currentTrackedFiles.contains(fileName)) {
@@ -301,6 +313,10 @@ public class Repository {
             }
         }
 
+        clearStagingArea();
+    }
+
+    private static void clearStagingArea() {
         for (File file : Objects.requireNonNull(STAGING_DIR.listFiles())) {
             try {
                 Files.delete(file.toPath());
@@ -377,13 +393,13 @@ public class Repository {
             message("Cannot remove the current branch.");
             System.exit(0);
         }
-        HashMap<String, String> branchMappingCommit = getBranchMappingCommit();
+        TreeMap<String, String> branchMappingCommit = getBranchMappingCommit();
         branchMappingCommit.remove(branchName);
         setBranchMappingCommit(branchMappingCommit);
     }
 
     private static void setBranch(String branchName, String commitSha1) {
-        HashMap<String, String> branchMappingCommit = getBranchMappingCommit();
+        TreeMap<String, String> branchMappingCommit = getBranchMappingCommit();
         branchMappingCommit.put(branchName, commitSha1);
         setBranchMappingCommit(branchMappingCommit);
     }
@@ -391,8 +407,7 @@ public class Repository {
     private static void switchBranch(String branchName) {
         if (getBranchSet().contains(branchName)) {
             writeContents(CURRENT_BRANCH_FILE, branchName);
-        }
-        else {
+        } else {
             message("No such branch exists.");
             System.exit(0);
         }
@@ -410,11 +425,11 @@ public class Repository {
         return getBranchMappingCommit().keySet();
     }
 
-    private static HashMap<String, String> getBranchMappingCommit() {
-        return readObject(BRANCHES_FILE, HashMap.class);
+    private static TreeMap<String, String> getBranchMappingCommit() {
+        return readObject(BRANCHES_FILE, TreeMap.class);
     }
 
-    private static void setBranchMappingCommit(HashMap<String, String> branchMappingCommit) {
+    private static void setBranchMappingCommit(TreeMap<String, String> branchMappingCommit) {
         writeObject(BRANCHES_FILE, branchMappingCommit);
     }
 
@@ -478,21 +493,21 @@ public class Repository {
         }
         message("");
 
-        HashSet<String> stagedFilesSet = new HashSet<>(stagedFilesList);
-        HashSet<String> removedFilesSet = new HashSet<>(removedFilesList);
-        HashSet<String> fileSet = getCurrentFileSet();
-        HashSet<String> trackedFiles = getCurrentCommit().getTrackedFiles();
+        TreeSet<String> stagedFilesSet = new TreeSet<>(stagedFilesList);
+        TreeSet<String> removedFilesSet = new TreeSet<>(removedFilesList);
+        TreeSet<String> fileSet = getCurrentFileSet();
+        TreeSet<String> trackedFiles = getCurrentCommit().getTrackedFiles();
 
-        HashSet<String> delNotStageFilesSet = new HashSet<>(trackedFiles);
+        TreeSet<String> delNotStageFilesSet = new TreeSet<>(trackedFiles);
         delNotStageFilesSet.removeAll(fileSet);
         delNotStageFilesSet.removeAll(stagedFilesSet);
         delNotStageFilesSet.removeAll(removedFilesSet);
 
-        HashSet<String> untrackedFilesSet = new HashSet<>(fileSet);
+        TreeSet<String> untrackedFilesSet = new TreeSet<>(fileSet);
         untrackedFilesSet.removeAll(trackedFiles);
         untrackedFilesSet.removeAll(stagedFilesSet);
 
-        HashSet<String> modNotStageFilesSet = new HashSet<>();
+        TreeSet<String> modNotStageFilesSet = new TreeSet<>();
         Commit currentCommit = getCurrentCommit();
         for (String fileName : fileSet) {
             File file = join(CWD, fileName);
@@ -560,7 +575,7 @@ public class Repository {
         }
         String currentBranch = getCurrentBranchName();
         String givenBranch = branchName;
-        HashMap<String, String> branchMappingCommit = getBranchMappingCommit();
+        TreeMap<String, String> branchMappingCommit = getBranchMappingCommit();
         if (!branchMappingCommit.containsKey(givenBranch)) {
             message("A branch with that name does not exist.");
             System.exit(0);
@@ -573,8 +588,8 @@ public class Repository {
         // 检查是否有 untracked files 会被覆盖
         String givenCommitSha1ForCheck = getBranch(givenBranch);
         Commit givenCommitForCheck = Commit.load(givenCommitSha1ForCheck);
-        HashSet<String> currentFileSet = getCurrentFileSet();
-        HashSet<String> currentTrackedFiles = getCurrentCommit().getTrackedFiles();
+        TreeSet<String> currentFileSet = getCurrentFileSet();
+        TreeSet<String> currentTrackedFiles = getCurrentCommit().getTrackedFiles();
         if (givenCommitForCheck != null) {
             for (String fileName : givenCommitForCheck.getTrackedFiles()) {
                 if (currentFileSet.contains(fileName) && !currentTrackedFiles.contains(fileName)) {
@@ -598,42 +613,9 @@ public class Repository {
         }
         processMergeFiles(splitPointSha1, currentCommitSha1, givenCommitSha1);
 
-        // 先继承当前 commit 的所有文件
-        Commit parentCommit = getCurrentCommit();
-        HashMap<String, String> filesMappingBlobs = new HashMap<>();
-        if (parentCommit != null) {
-            for (String fileName : parentCommit.getTrackedFiles()) {
-                String blobSha1 = parentCommit.findFileSha1(fileName);
-                if (blobSha1 != null) {
-                    filesMappingBlobs.put(fileName, blobSha1);
-                }
-            }
-        }
+        TreeMap<String, String> filesMappingBlobs = getFilesMappingBlobs();
 
-        // 然后处理暂存区的修改（添加/修改/删除）
-        for (File file : Objects.requireNonNull(STAGING_DIR.listFiles())) {
-            try {
-                if (Files.size(file.toPath()) == 0) {
-                    // 空文件表示删除标记
-                    filesMappingBlobs.remove(file.getName());
-                } else {
-                    Blob blob = new Blob(file);
-                    blob.save();
-                    filesMappingBlobs.put(file.getName(), blob.getSha1());
-                }
-            } catch (IOException e) {
-                throw error("Unable to read staging file.");
-            }
-        }
-
-        // 清理暂存区
-        for (File file : Objects.requireNonNull(STAGING_DIR.listFiles())) {
-            try {
-                Files.delete(file.toPath());
-            } catch (IOException e) {
-                throw error("Unable to delete staging file.");
-            }
-        }
+        clearStagingArea();
 
         Commit newCommit = new Commit("Merged " + givenBranch + " into " + currentBranch + ".",
                 filesMappingBlobs, currentCommitSha1, givenCommitSha1);
@@ -643,7 +625,7 @@ public class Repository {
 
     private static String findSplitPoint(String currentCommitSha1, String givenCommitSha1) {
         // 获取当前分支的所有祖先
-        HashSet<String> currentAncestors = getAllAncestors(currentCommitSha1);
+        TreeSet<String> currentAncestors = getAllAncestors(currentCommitSha1);
         // BFS 查找 given 分支中最近的共同祖先
         Queue<String> queue = new LinkedList<>();
         queue.add(givenCommitSha1);
@@ -668,8 +650,8 @@ public class Repository {
         return null;
     }
 
-    private static HashSet<String> getAllAncestors(String commitSha1) {
-        HashSet<String> ancestors = new HashSet<>();
+    private static TreeSet<String> getAllAncestors(String commitSha1) {
+        TreeSet<String> ancestors = new TreeSet<>();
         Queue<String> queue = new LinkedList<>();
         queue.add(commitSha1);
         while (!queue.isEmpty()) {
@@ -697,7 +679,7 @@ public class Repository {
         Commit givenCommit = Commit.load(givenCommitSha1);
 
         // 收集所有涉及的文件名
-        HashSet<String> allFiles = new HashSet<>();
+        TreeSet<String> allFiles = new TreeSet<>();
         if (splitCommit != null) {
             allFiles.addAll(splitCommit.getTrackedFiles());
         }
@@ -778,17 +760,6 @@ public class Repository {
         return existsInFrom && !existsInTo;
     }
 
-    private static boolean isFileAdded(String fileName, String fromCommitSha1, String toCommitSha1) {
-        Commit fromCommit = Commit.load(fromCommitSha1);
-        Commit toCommit = Commit.load(toCommitSha1);
-
-        // 文件在 from 中不存在，但在 to 中存在
-        boolean existsInFrom = fromCommit != null && fromCommit.findFileSha1(fileName) != null;
-        boolean existsInTo = toCommit != null && toCommit.findFileSha1(fileName) != null;
-
-        return !existsInFrom && existsInTo;
-    }
-
     private static void handleConflict(String fileName, Commit currentCommit, Commit givenCommit) {
         File workingFile = join(CWD, fileName);
         String currentContent = "";
@@ -804,11 +775,11 @@ public class Repository {
             givenContent = readContentsAsString(givenBlobFile);
         }
 
-        String conflictContent = "<<<<<<< HEAD\n" +
-                currentContent +
-                "=======\n" +
-                givenContent +
-                ">>>>>>>\n";
+        String conflictContent = "<<<<<<< HEAD\n"
+                + currentContent
+                + "=======\n"
+                + givenContent
+                + ">>>>>>>\n";
 
         writeContents(workingFile, conflictContent);
         stagingFileByName(fileName);

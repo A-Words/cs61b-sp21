@@ -7,12 +7,16 @@ import static gitlet.Repository.BLOB_DIR;
 import static gitlet.Utils.*;
 
 public class Blob {
-    private File file;
-    private String sha1;
+    private final File file;
+    private final String sha1;
 
     public Blob(File file) {
         this.file = file;
         this.sha1 = sha1(readContentsAsString(file) + file.getName());
+    }
+
+    public static File load(String sha1) {
+        return join(BLOB_DIR, sha1);
     }
 
     public void save() {
@@ -25,10 +29,6 @@ public class Blob {
         } catch (IOException e) {
             throw error("Internal error saving blob.");
         }
-    }
-
-    public static File load(String sha1) {
-        return join(BLOB_DIR, sha1);
     }
 
     public String getSha1() {

@@ -4,18 +4,16 @@ import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
-import static gitlet.Repository.BLOB_DIR;
 import static gitlet.Repository.COMMIT_DIR;
 import static gitlet.Utils.*;
 
-/** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
+/**
+ * Represents a gitlet commit object.
  *
- *  @author A_Words
+ * @author A_Words
  */
 public class Commit implements Serializable {
     /**
@@ -24,22 +22,24 @@ public class Commit implements Serializable {
      * variable is used. We've provided one example for `message`.
      */
 
-    /** The message of this Commit. */
-    private String message;
-    private ZonedDateTime timestamp;
-    HashMap<String, String> filesMappingBlobs;
+    /**
+     * The message of this Commit.
+     */
+    private final String message;
+    private final ZonedDateTime timestamp;
+    private final TreeMap<String, String> filesMappingBlobs;
     private String parentSha1;
     private String secondParentSha1;
-    private String sha1;
+    private final String sha1;
 
     public Commit(String message, ZonedDateTime timestamp) {
         this.message = message;
         this.timestamp = timestamp;
-        filesMappingBlobs = new HashMap<>();
+        filesMappingBlobs = new TreeMap<>();
         sha1 = sha1(message + timestamp.toString());
     }
 
-    public Commit(String message, HashMap<String, String> filesMappingBlobs, String parentSha1) {
+    public Commit(String message, TreeMap<String, String> filesMappingBlobs, String parentSha1) {
         this.message = message;
         this.filesMappingBlobs = filesMappingBlobs;
         this.parentSha1 = parentSha1;
@@ -47,13 +47,25 @@ public class Commit implements Serializable {
         sha1 = sha1(message + timestamp + filesMappingBlobs.toString() + parentSha1);
     }
 
-    public Commit(String message, HashMap<String, String> filesMappingBlobs, String parentSha1, String secondParentSha1) {
+    public Commit(
+            String message,
+            TreeMap<String, String> filesMappingBlobs,
+            String parentSha1,
+            String secondParentSha1) {
         this.message = message;
         this.filesMappingBlobs = filesMappingBlobs;
         this.parentSha1 = parentSha1;
         this.secondParentSha1 = secondParentSha1;
         timestamp = ZonedDateTime.now();
         sha1 = sha1(message + timestamp + filesMappingBlobs.toString() + parentSha1 + secondParentSha1);
+    }
+
+    public static Commit load(String sha1) {
+        File file = join(COMMIT_DIR, sha1);
+        if (!file.exists()) {
+            return null;
+        }
+        return readObject(file, Commit.class);
     }
 
     public Commit parent() {
@@ -95,14 +107,6 @@ public class Commit implements Serializable {
         writeObject(file, this);
     }
 
-    public static Commit load(String sha1) {
-        File file = join(COMMIT_DIR, sha1);
-        if (!file.exists()) {
-            return null;
-        }
-        return readObject(file, Commit.class);
-    }
-
     public File findFile(String fileName) {
         String blobSha1 = findFileSha1(fileName);
         if (blobSha1 == null) {
@@ -124,7 +128,7 @@ public class Commit implements Serializable {
         return filesMappingBlobs.get(fileName);
     }
 
-    public HashSet<String> getTrackedFiles() {
-        return new HashSet<>(filesMappingBlobs.keySet());
+    public TreeSet<String> getTrackedFiles() {
+        return new TreeSet<>(filesMappingBlobs.keySet());
     }
 }
