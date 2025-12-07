@@ -461,6 +461,20 @@ public class Repository {
 
     public static void status() {
         checkDir();
+        printBranches();
+
+        List<String> stagedFilesList = new ArrayList<>();
+        List<String> removedFilesList = new ArrayList<>();
+        collectStagedAndRemovedFiles(stagedFilesList, removedFilesList);
+
+        printSection("Staged Files", stagedFilesList);
+        printSection("Removed Files", removedFilesList);
+
+        printModificationsNotStaged(stagedFilesList, removedFilesList);
+        printUntrackedFiles(stagedFilesList);
+    }
+
+    private static void printBranches() {
         message("=== Branches ===");
         List<String> sortedBranches = new ArrayList<>(getBranchSet());
         Collections.sort(sortedBranches);
@@ -472,9 +486,11 @@ public class Repository {
             }
         }
         message("");
+    }
 
-        List<String> stagedFilesList = new ArrayList<>();
-        List<String> removedFilesList = new ArrayList<>();
+    private static void collectStagedAndRemovedFiles(
+            List<String> stagedFilesList,
+            List<String> removedFilesList) {
         for (File file : Objects.requireNonNull(STAGING_DIR.listFiles())) {
             try {
                 if (Files.size(file.toPath()) == 0) {
@@ -488,19 +504,19 @@ public class Repository {
         }
         Collections.sort(stagedFilesList);
         Collections.sort(removedFilesList);
+    }
 
-        message("=== Staged Files ===");
-        for (String fileName : stagedFilesList) {
+    private static void printSection(String title, List<String> files) {
+        message("=== " + title + " ===");
+        for (String fileName : files) {
             message(fileName);
         }
         message("");
+    }
 
-        message("=== Removed Files ===");
-        for (String fileName : removedFilesList) {
-            message(fileName);
-        }
-        message("");
-
+    private static void printModificationsNotStaged(
+            List<String> stagedFilesList,
+            List<String> removedFilesList) {
         TreeSet<String> stagedFilesSet = new TreeSet<>(stagedFilesList);
         TreeSet<String> removedFilesSet = new TreeSet<>(removedFilesList);
         TreeSet<String> fileSet = getCurrentFileSet();
@@ -510,10 +526,6 @@ public class Repository {
         delNotStageFilesSet.removeAll(fileSet);
         delNotStageFilesSet.removeAll(stagedFilesSet);
         delNotStageFilesSet.removeAll(removedFilesSet);
-
-        TreeSet<String> untrackedFilesSet = new TreeSet<>(fileSet);
-        untrackedFilesSet.removeAll(trackedFiles);
-        untrackedFilesSet.removeAll(stagedFilesSet);
 
         TreeSet<String> modNotStageFilesSet = new TreeSet<>();
         Commit currentCommit = getCurrentCommit();
@@ -540,14 +552,10 @@ public class Repository {
         // Case 3: Staged for addition, but deleted in the working directory
         for (String fileName : stagedFilesSet) {
             if (!fileSet.contains(fileName)) {
-                modNotStageFilesSet.add(fileName);
-                // Update delNotStageFilesSet to include this case with (deleted)
                 delNotStageFilesSet.add(fileName);
-                modNotStageFilesSet.remove(fileName);
             }
         }
 
-        // 合并并排序 Modifications Not Staged
         List<String> modNotStagedList = new ArrayList<>();
         for (String fileName : delNotStageFilesSet) {
             modNotStagedList.add(fileName + " (deleted)");
@@ -557,21 +565,22 @@ public class Repository {
         }
         Collections.sort(modNotStagedList);
 
-        message("=== Modifications Not Staged For Commit ===");
-        for (String entry : modNotStagedList) {
-            message(entry);
-        }
-        message("");
+        printSection("Modifications Not Staged For Commit", modNotStagedList);
+    }
 
-        // 排序 Untracked Files
+    private static void printUntrackedFiles(List<String> stagedFilesList) {
+        TreeSet<String> stagedFilesSet = new TreeSet<>(stagedFilesList);
+        TreeSet<String> fileSet = getCurrentFileSet();
+        TreeSet<String> trackedFiles = getCurrentCommit().getTrackedFiles();
+
+        TreeSet<String> untrackedFilesSet = new TreeSet<>(fileSet);
+        untrackedFilesSet.removeAll(trackedFiles);
+        untrackedFilesSet.removeAll(stagedFilesSet);
+
         List<String> untrackedList = new ArrayList<>(untrackedFilesSet);
         Collections.sort(untrackedList);
 
-        message("=== Untracked Files ===");
-        for (String fileName : untrackedList) {
-            message(fileName);
-        }
-        message("");
+        printSection("Untracked Files", untrackedList);
     }
 
     public static void merge(String branchName) {
