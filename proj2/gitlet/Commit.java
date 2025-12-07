@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.time.ZonedDateTime;
@@ -57,7 +58,11 @@ public class Commit implements Serializable {
         this.parentSha1 = parentSha1;
         this.secondParentSha1 = secondParentSha1;
         timestamp = ZonedDateTime.now();
-        sha1 = sha1(message + timestamp + filesMappingBlobs.toString() + parentSha1 + secondParentSha1);
+        sha1 = sha1(message
+                + timestamp
+                + filesMappingBlobs.toString()
+                + parentSha1
+                + secondParentSha1);
     }
 
     public static Commit load(String sha1) {
@@ -119,7 +124,7 @@ public class Commit implements Serializable {
             } else {
                 return blobFile;
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw error("Internal error reading blob file.");
         }
     }

@@ -47,6 +47,8 @@ public class Repository {
      */
 
     private static final String COMMIT_DATE_PATTERN = "E MMM d HH:mm:ss yyyy Z";
+    private static final String UNTRACKED_FILE_WARNING =
+            "There is an untracked file in the way; delete it, or add and commit it first.";
 
     public static void init() {
         if (isRepositoryExists()) {
@@ -200,9 +202,12 @@ public class Repository {
                     + " "
                     + commit.getSecondParentSha1().substring(0, 7));
         }
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(COMMIT_DATE_PATTERN, Locale.ENGLISH);
-        message("Date: "
-                + commit.getTimestamp().withZoneSameInstant(ZoneId.systemDefault()).format(dateTimeFormatter));
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
+                COMMIT_DATE_PATTERN,
+                Locale.ENGLISH);
+        message("Date: " + commit.getTimestamp()
+                .withZoneSameInstant(ZoneId.systemDefault())
+                .format(dateTimeFormatter));
         message(commit.getMessage());
         message("");
     }
@@ -246,7 +251,10 @@ public class Repository {
         }
         File workingFile = join(CWD, fileName);
         try {
-            Files.copy(commitFile.toPath(), workingFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(
+                    commitFile.toPath(),
+                    workingFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw error("Unable to copy commit file.");
         }
@@ -296,7 +304,7 @@ public class Repository {
 
         for (String fileName : targetTrackedFiles) {
             if (currentFileSet.contains(fileName) && !currentTrackedFiles.contains(fileName)) {
-                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                message(UNTRACKED_FILE_WARNING);
                 System.exit(0);
             }
             checkout(commitSha1, fileName);
@@ -593,7 +601,7 @@ public class Repository {
         if (givenCommitForCheck != null) {
             for (String fileName : givenCommitForCheck.getTrackedFiles()) {
                 if (currentFileSet.contains(fileName) && !currentTrackedFiles.contains(fileName)) {
-                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    message(UNTRACKED_FILE_WARNING);
                     System.exit(0);
                 }
             }
@@ -673,7 +681,10 @@ public class Repository {
         return ancestors;
     }
 
-    private static void processMergeFiles(String splitPointSha1, String currentCommitSha1, String givenCommitSha1) {
+    private static void processMergeFiles(
+            String splitPointSha1,
+            String currentCommitSha1,
+            String givenCommitSha1) {
         Commit splitCommit = Commit.load(splitPointSha1);
         Commit currentCommit = Commit.load(currentCommitSha1);
         Commit givenCommit = Commit.load(givenCommitSha1);
@@ -699,7 +710,9 @@ public class Repository {
             boolean deletedInGiven = isFileDeleted(fileName, splitPointSha1, givenCommitSha1);
 
             String splitSha1 = splitCommit != null ? splitCommit.findFileSha1(fileName) : null;
-            String currentSha1 = currentCommit != null ? currentCommit.findFileSha1(fileName) : null;
+            String currentSha1 = currentCommit != null
+                    ? currentCommit.findFileSha1(fileName)
+                    : null;
             String givenSha1 = givenCommit != null ? givenCommit.findFileSha1(fileName) : null;
 
             if (!modifiedInCurrent && modifiedInGiven) {
@@ -713,10 +726,12 @@ public class Repository {
                 }
             } else if (modifiedInCurrent && !modifiedInGiven) {
                 // 规则2: 仅 current 修改 -> 保持不变
+                return;
             } else if (modifiedInCurrent && modifiedInGiven) {
                 // 两边都修改了
                 if (Objects.equals(currentSha1, givenSha1)) {
                     // 规则3: 同样修改 -> 保持不变
+                    return;
                 } else {
                     // 规则4: 不同修改 -> 冲突
                     handleConflict(fileName, currentCommit, givenCommit);
@@ -730,7 +745,10 @@ public class Repository {
         }
     }
 
-    private static boolean isFileModified(String fileName, String fromCommitSha1, String toCommitSha1) {
+    private static boolean isFileModified(
+            String fileName,
+            String fromCommitSha1,
+            String toCommitSha1) {
         Commit fromCommit = Commit.load(fromCommitSha1);
         Commit toCommit = Commit.load(toCommitSha1);
 
@@ -749,7 +767,10 @@ public class Repository {
         return !blobSha1InFrom.equals(blobSha1InTo);
     }
 
-    private static boolean isFileDeleted(String fileName, String fromCommitSha1, String toCommitSha1) {
+    private static boolean isFileDeleted(
+            String fileName,
+            String fromCommitSha1,
+            String toCommitSha1) {
         Commit fromCommit = Commit.load(fromCommitSha1);
         Commit toCommit = Commit.load(toCommitSha1);
 
