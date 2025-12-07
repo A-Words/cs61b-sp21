@@ -654,15 +654,7 @@ public class Repository {
             if (currentAncestors.contains(sha1)) {
                 return sha1;
             }
-            Commit commit = Commit.load(sha1);
-            if (commit != null) {
-                if (commit.getParentSha1() != null) {
-                    queue.add(commit.getParentSha1());
-                }
-                if (commit.getSecondParentSha1() != null) {
-                    queue.add(commit.getSecondParentSha1());
-                }
-            }
+            addParentsToQueue(queue, sha1);
         }
         return null;
     }
@@ -677,17 +669,21 @@ public class Repository {
                 continue;
             }
             ancestors.add(sha1);
-            Commit commit = Commit.load(sha1);
-            if (commit != null) {
-                if (commit.getParentSha1() != null) {
-                    queue.add(commit.getParentSha1());
-                }
-                if (commit.getSecondParentSha1() != null) {
-                    queue.add(commit.getSecondParentSha1());
-                }
-            }
+            addParentsToQueue(queue, sha1);
         }
         return ancestors;
+    }
+
+    private static void addParentsToQueue(Queue<String> queue, String sha1) {
+        Commit commit = Commit.load(sha1);
+        if (commit != null) {
+            if (commit.getParentSha1() != null) {
+                queue.add(commit.getParentSha1());
+            }
+            if (commit.getSecondParentSha1() != null) {
+                queue.add(commit.getSecondParentSha1());
+            }
+        }
     }
 
     private static void processMergeFiles(
@@ -718,11 +714,15 @@ public class Repository {
             boolean deletedInCurrent = isFileDeleted(fileName, splitPointSha1, currentCommitSha1);
             boolean deletedInGiven = isFileDeleted(fileName, splitPointSha1, givenCommitSha1);
 
-            String splitSha1 = splitCommit != null ? splitCommit.findFileSha1(fileName) : null;
+            String splitSha1 = splitCommit != null
+                    ? splitCommit.findFileSha1(fileName)
+                    : null;
             String currentSha1 = currentCommit != null
                     ? currentCommit.findFileSha1(fileName)
                     : null;
-            String givenSha1 = givenCommit != null ? givenCommit.findFileSha1(fileName) : null;
+            String givenSha1 = givenCommit != null
+                    ? givenCommit.findFileSha1(fileName)
+                    : null;
 
             if (!modifiedInCurrent && modifiedInGiven) {
                 // 规则1: 仅 given 修改 -> 使用 given 版本
@@ -733,17 +733,14 @@ public class Repository {
                     checkout(givenCommitSha1, fileName);
                     stagingFileByName(fileName);
                 }
-            } else if (modifiedInCurrent && !modifiedInGiven) {
                 // 规则2: 仅 current 修改 -> 保持不变
-                return;
             } else if (modifiedInCurrent && modifiedInGiven) {
-                // 两边都修改了
-                if (Objects.equals(currentSha1, givenSha1)) {
-                    // 规则3: 同样修改 -> 保持不变
-                    return;
-                } else {
-                    // 规则4: 不同修改 -> 冲突
-                    handleConflict(fileName, currentCommit, givenCommit);
+                // 规则3: 两边同样修改 -> 保持不变
+                if (!Objects.equals(currentSha1, givenSha1)) {
+                    // 规则4: 两边不同修改 -> 冲突
+                    if (currentCommit != null) {
+                        handleConflict(fileName, currentCommit, givenCommit);
+                    }
                     hasConflict = true;
                 }
             }
